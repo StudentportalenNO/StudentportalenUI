@@ -1,0 +1,10 @@
+language: node_js
+node_js:
+  - '0.8'
+  - '0.10'
+before_script:
+  - 'npm install -g grunt-cli'
+deploy:
+  provider: nodejitsu
+  user: "kennethlynne"
+  api_key: "bb955d83-ac10-44be-b9b9-51061ab3318f"
