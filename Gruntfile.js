@@ -1,4 +1,4 @@
-// Generated on 2013-12-22 using generator-angular-xl 0.2.1
+// Generated on 2014-01-02 using generator-angular-xl 0.2.1
 'use strict';
 var path = require('path');
 
@@ -42,7 +42,7 @@ module.exports = function (grunt) {
                 tasks: ['coffee:test']
             },
             compass: {
-                files: ['<%= yeoman.app %>/styles/**/*.{scss,sass}'],
+                files: ['<%= yeoman.app %>/styles/**/*.{scss,sass}', '<%= yeoman.app %>/components/**/*.{scss,sass}', '<%= yeoman.app %>/pages/**/*.{scss,sass}'],
                 tasks: ['compass:server']
             },
             styles: {
@@ -179,8 +179,7 @@ module.exports = function (grunt) {
             dist: {
                 files: {
                     '<%= yeoman.dist %>/styles/main.css': [
-                        '.tmp/styles/**/*.css',
-                        '<%= yeoman.app %>/styles/**/*.css'
+                        '.tmp/styles/**/*.css'
                     ]
                 }
             }
@@ -219,7 +218,8 @@ module.exports = function (grunt) {
                         '*.{ico,png,txt}',
                         '.htaccess',
                         'images/**/*.{gif,webp}',
-                        'fonts/*'
+                        'fonts/*',
+                        'CNAME'
                     ]
                 }, {
                     expand: true,
@@ -254,7 +254,7 @@ module.exports = function (grunt) {
         karma: {
             unit: {
                 configFile: 'karma.conf.js',
-                singleRun: false
+                singleRun: true
             }
         },
         ngmin: {
@@ -262,7 +262,7 @@ module.exports = function (grunt) {
                 files: [{
                     expand: true,
                     src: appJs,
-                    dest: '.tmp/app_scripts'
+                    dest: '.tmp/app_js/'
                 }]
             }
         },
@@ -279,9 +279,9 @@ module.exports = function (grunt) {
         uglify: {
             dist: {
                 files: {
-                    '.tmp/scripts/app.js': [
-                        '.tmp/app_scripts/**/*.js'
-                    ]
+                    '.tmp/scripts/app.js': appJs.map(function (path) {
+                        return '.tmp/app_js/' + path;
+                    })
                 }
             }
         },
@@ -336,6 +336,45 @@ module.exports = function (grunt) {
                 }
             }
 
+        },
+        bump: {
+            options: {
+                files: ['package.json', 'bower.json'],
+                updateConfigs: [],
+                commit: false,
+                commitMessage: 'Release v%VERSION%',
+                commitFiles: ['-a'], // '-a' for all files
+                createTag: true,
+                tagName: 'v%VERSION%',
+                tagMessage: 'Version %VERSION%',
+                push: false,
+                pushTo: 'upstream',
+                gitDescribeOptions: '--tags --always --abbrev=1 --dirty=-d' // options to use with '$ git describe'
+            }
+        },
+        protractor: {
+            options: {
+                configFile: "node_modules/protractor/referenceConf.js", // Default config file
+                keepAlive: false, // If false, the grunt process stops when the test fails.
+                noColor: false, // If true, protractor will not use colors in its output.
+                args: {
+                    // Arguments passed to the command
+                }
+            }/*,
+            dist: {
+                options: {
+                    configFile: "e2e.conf.js", // Target-specific config file
+                    args: {} // Target-specific arguments
+                }
+            }*/
+        },
+        'gh-pages': {
+            options: {
+                base: 'dist',
+                tag: 'v' + require('./bower.json').version,
+                message: 'Auto-generated build from v' + require('./bower.json').version
+            },
+            src: ['**']
         }
 
     });
@@ -358,8 +397,12 @@ module.exports = function (grunt) {
         'karma'
     ]);
 
+    grunt.registerTask('test-e2e', [
+        'protractor'
+    ]);
+
     grunt.registerTask('build', [
-        'clean:dist',
+        'clean',
         'concurrent:dist',
         'ngmin',
         'uglify',
@@ -369,6 +412,18 @@ module.exports = function (grunt) {
         'rev',
         'linkAssets-production',
         'htmlmin'
+    ]);
+
+    grunt.registerTask('release', [
+        'deploy',
+        'bump'
+    ]);
+
+    grunt.registerTask('deploy', [
+        'test',
+        'build',
+        'test-e2e',
+        'gh-pages'
     ]);
 
     grunt.registerTask('linkAssets-dev', [
